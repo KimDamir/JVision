@@ -6,18 +6,16 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import dictionary.Word
+import dataclasses.Word
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
 @Preview
-fun WordList(modifier: Modifier = Modifier, words:List<Word>, isHistory: Boolean = false) {
+fun WordList(modifier: Modifier = Modifier, words:List<Word>, callback: (Word) -> Unit) {
     Column(modifier=modifier.fillMaxSize())
     {
         Row (Modifier.weight(1F), horizontalArrangement = Arrangement.SpaceEvenly) {
@@ -42,6 +40,7 @@ fun WordList(modifier: Modifier = Modifier, words:List<Word>, isHistory: Boolean
                         if (!isChosen) {
                             isChosen = true
                             color = Color(0x6F7EC9)
+                            callback(word)
                         }
                     }, horizontalArrangement = Arrangement.SpaceEvenly) {
 
@@ -50,7 +49,7 @@ fun WordList(modifier: Modifier = Modifier, words:List<Word>, isHistory: Boolean
                             border = BorderStroke(width = 1.dp, color = MaterialTheme.colorScheme.secondary)
                         ) {
                             Text(
-                                text = word.writing,
+                                text = word.writings[0],
                                 Modifier.padding(2.dp).fillMaxSize(),
                                 fontStyle = MaterialTheme.typography.bodyMedium.fontStyle,
                                 textAlign = TextAlign.Center,
@@ -62,7 +61,7 @@ fun WordList(modifier: Modifier = Modifier, words:List<Word>, isHistory: Boolean
                             border = BorderStroke(width = 1.dp, color = MaterialTheme.colorScheme.secondary)
                         ) {
                             Text(
-                                text = word.reading,
+                                text = word.readings[0],
                                 Modifier.padding(2.dp).fillMaxSize(),
                                 fontStyle = MaterialTheme.typography.bodyMedium.fontStyle,
                                 textAlign = TextAlign.Center,
@@ -74,7 +73,7 @@ fun WordList(modifier: Modifier = Modifier, words:List<Word>, isHistory: Boolean
                             border = BorderStroke(width = 1.dp, color = MaterialTheme.colorScheme.secondary)
                         ) {
                             Text(
-                                text = word.definition,
+                                text = word.translations[0],
                                 Modifier.padding(2.dp).fillMaxSize(),
                                 fontStyle = MaterialTheme.typography.bodyMedium.fontStyle,
                                 textAlign = TextAlign.Center,

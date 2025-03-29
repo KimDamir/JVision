@@ -4,7 +4,6 @@ import android.app.Activity.RESULT_CANCELED
 import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.content.res.Resources
-import android.graphics.ImageFormat
 import android.graphics.PixelFormat
 import android.hardware.display.DisplayManager
 import android.hardware.display.VirtualDisplay
@@ -13,13 +12,17 @@ import android.media.projection.MediaProjection
 import android.media.projection.MediaProjectionManager
 import android.os.Build
 import android.os.Handler
-import android.os.HandlerThread
 import android.os.Looper
 import android.view.*
 import androidx.annotation.RequiresApi
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.Button
+import androidx.compose.material.ButtonColors
+import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.getValue
@@ -29,7 +32,9 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInteropFilter
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.unit.dp
 import androidx.core.content.getSystemService
 import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.setViewTreeLifecycleOwner
@@ -37,8 +42,19 @@ import androidx.savedstate.SavedStateRegistry
 import androidx.savedstate.SavedStateRegistryController
 import androidx.savedstate.SavedStateRegistryOwner
 import androidx.savedstate.setViewTreeSavedStateRegistryOwner
-import dictionary.Word
+import api.Client
+import api.sendScreenshot
+import dataclasses.Word
+import jvision.composeapp.generated.resources.Res
+import jvision.composeapp.generated.resources.icon
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import org.example.project.R
+import org.jetbrains.compose.resources.painterResource
+import store.UserStore
 import ui.components.Popup
+import ui.theme.JvisionTheme
 
 
 // you need extends LifecycleService and implement SavedStateRegistryOwner.
@@ -71,11 +87,9 @@ class ScreenshotService : LifecycleService(), SavedStateRegistryOwner {
             }
         }.start()
 
-        // init your SavedStateRegistryController
-        savedStateRegistryController.performAttach() // you can ignore this line, because performRestore method will auto call performAttach() first.
+        savedStateRegistryController.performAttach()
         savedStateRegistryController.performRestore(null)
 
-        // configure your ComposeView
         contentView = buttonView()
         windowManager = getSystemService<WindowManager>()!!
         layoutInflater = getSystemService<LayoutInflater>()!!
@@ -86,8 +100,8 @@ class ScreenshotService : LifecycleService(), SavedStateRegistryOwner {
     private inner class MediaProjectionStopCallback : MediaProjection.Callback() {
         override fun onStop() {
             handler.post {
-                if (virtualDisplay != null) virtualDisplay.release()
-                if (imageReader != null) imageReader.setOnImageAvailableListener(null, null)
+                if (this@ScreenshotService::virtualDisplay.isInitialized) virtualDisplay.release()
+                if (this@ScreenshotService::imageReader.isInitialized) imageReader.setOnImageAvailableListener(null, null)
                 mediaProjection.unregisterCallback(this@MediaProjectionStopCallback)
             }
         }
@@ -97,8 +111,16 @@ class ScreenshotService : LifecycleService(), SavedStateRegistryOwner {
     @RequiresApi(Build.VERSION_CODES.R)
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         windowManager.addView(contentView, getWindowButtonParams())
+        isLoaded = false
         val notification = NotificationUtils.getNotification(this)
         startForeground(notification.first, notification.second, ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION)
+        val token = intent!!.getStringExtra("TOKEN")
+        CoroutineScope(Dispatchers.IO).launch {
+            if (token != null) {
+                UserStore(this@ScreenshotService).saveToken(token)
+            }
+        }
+
         val resultCode = intent!!.getIntExtra("RESULT_CODE", RESULT_CANCELED)
         val data = intent.getParcelableExtra<Intent>("DATA")
         print("$resultCode $data Printed Here")
@@ -130,22 +152,23 @@ class ScreenshotService : LifecycleService(), SavedStateRegistryOwner {
         return ComposeView(this).apply {
             setViewTreeSavedStateRegistryOwner(this@ScreenshotService)
             setContent {
-                val xView by remember{mutableStateOf(x)}
-                val yView by remember{mutableStateOf(y)}
+                JvisionTheme {
+                    val xView by remember{mutableStateOf(x)}
+                    val yView by remember{mutableStateOf(y)}
 
-                Surface(modifier = Modifier.background(Color.Transparent).fillMaxSize().pointerInteropFilter { motionEvent ->
-                    x = motionEvent.x
-                    y = motionEvent.y
-                    println("Clicked! $x  $y")
-                    captureScreenshot(x, y)
-                    post {
-                        windowManager.removeView(this@apply)
-                        waitForLoaded(x, y)
-
-                    }
-                    false
-                }, color = Color.Transparent) {
-                    Text("X: $xView     Y: $yView") }
+                    Surface(modifier = Modifier.background(Color.Transparent).fillMaxSize().pointerInteropFilter { motionEvent ->
+                        x = motionEvent.x
+                        y = motionEvent.y
+                        println("Clicked! $x  $y")
+                        captureScreenshot(x, y)
+                        post {
+                            windowManager.removeView(this@apply)
+                            waitForLoaded(x, y)
+                        }
+                        false
+                    }, color = Color.Transparent) {
+                        Text("X: $xView     Y: $yView") }
+                }
             }
             setViewTreeLifecycleOwner(this@ScreenshotService)
         }
@@ -157,14 +180,23 @@ class ScreenshotService : LifecycleService(), SavedStateRegistryOwner {
             setViewTreeSavedStateRegistryOwner(this@ScreenshotService)
             setViewTreeLifecycleOwner(this@ScreenshotService)
             setContent {
-                Button(onClick = {
-                    screenshotView = screenshotView()
-                    post {
-                        windowManager.addView(screenshotView, getWindowScreenshotParams())
+                JvisionTheme {
+                    Button(onClick = {
+                        if (errorCount == 0) {
+                            screenshotView = screenshotView()
+                            post {
+                                windowManager.addView(screenshotView, getWindowScreenshotParams())
+                            }
+                        }
+                        Modifier.background(Color.Transparent)
+                    }, colors = ButtonDefaults.buttonColors(backgroundColor = Color.Transparent, contentColor = Color.Transparent))
+                    {
+                        Box(modifier = Modifier.fillMaxSize()) {
+                            Image(painter = painterResource(Res.drawable.icon), "JVision button",
+                                contentScale = ContentScale.FillWidth,
+                                modifier = Modifier.size(150.dp))
+                        }
                     }
-
-                }) {
-                    Text("JV")
                 }
             }
         }
@@ -176,8 +208,8 @@ class ScreenshotService : LifecycleService(), SavedStateRegistryOwner {
         val windowMetrics = windowManager.maximumWindowMetrics
         val bounds = windowMetrics.bounds
         return WindowManager.LayoutParams(
-            150,  // Width
-            150,  // Height
+            250,  // Width
+            250,  // Height
             bounds.width()/2-75,  // X position
             -bounds.height()/2+150,  // Y position
             WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
@@ -209,7 +241,9 @@ class ScreenshotService : LifecycleService(), SavedStateRegistryOwner {
             setViewTreeSavedStateRegistryOwner(this@ScreenshotService)
             setViewTreeLifecycleOwner(this@ScreenshotService)
             setContent {
-                Popup(wordList)
+                JvisionTheme {
+                    Popup(wordList)
+                }
             }
             setOnTouchListener { _, _ ->
                 post {
@@ -262,31 +296,37 @@ class ScreenshotService : LifecycleService(), SavedStateRegistryOwner {
         )
         imageReader.setOnImageAvailableListener({ reader ->
             val image = reader.acquireLatestImage()
+            println("Image acquired")
             image?.let {
-                wordList = sendScreenshot(processImage(image))
+                reader.setOnImageAvailableListener(null, null)
+                wordList = sendScreenshot(processImage(image, x, y), this)
+                print(wordList)
                 isLoaded = true
-                println("Deleting imageListener")
-                imageReader.close()
+                reader.close()
                 virtualDisplay.release()
-                imageReader.setOnImageAvailableListener(null, null)
             }
         }, handler)
     }
     @RequiresApi(Build.VERSION_CODES.R)
     fun waitForLoaded(x: Float, y: Float) {
         if(isLoaded) {
+            isLoaded = false
+            errorCount = 0
+            println("Word list: $wordList")
             windowManager.addView(popupView(wordList), getWindowPopupParams(x, y))
         } else {
             errorCount ++
-            if (errorCount > 3) {
+            if (errorCount > 35) {
                 errorCount = 0
+                isLoaded = false
+                println("Canceled window")
                 return
             }
             Handler(Looper.getMainLooper()).postDelayed(
                 {
                     waitForLoaded(x, y)
                 },
-            100)
+            150)
         }
     }
 }

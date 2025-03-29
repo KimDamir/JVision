@@ -11,6 +11,7 @@ plugins {
     alias(libs.plugins.composeCompiler)
 }
 
+
 kotlin {
     androidTarget {
         @OptIn(ExperimentalKotlinGradlePluginApi::class)
@@ -65,6 +66,9 @@ kotlin {
             implementation(libs.androidx.activity.ktx)
             implementation(libs.androidx.fragment.ktx)
             implementation(libs.androidx.lifecycle.service)
+            implementation (libs.kotlinx.serialization.json)
+            implementation (libs.androidx.datastore.preferences.rxjava2)
+            implementation (libs.androidx.datastore.preferences.rxjava3)
         }
         commonMain.dependencies {
             implementation(compose.runtime)
@@ -76,10 +80,10 @@ kotlin {
             implementation(libs.androidx.lifecycle.viewmodel)
             implementation(libs.androidx.lifecycle.runtime.compose)
             implementation(compose.material3)
+            implementation(libs.kotlinx.coroutines.core)
         }
         desktopMain.dependencies {
             implementation(compose.desktop.currentOs)
-            implementation(libs.kotlinx.coroutines.swing)
             implementation(libs.system.hook)
             implementation(libs.okhttp)
             implementation(libs.com.google.code.gson.gson2)
@@ -103,6 +107,8 @@ android {
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
+            excludes += "META-INF/LICENSE.md"
+            excludes += "META-INF/NOTICE.md"
         }
     }
     buildTypes {
@@ -122,6 +128,10 @@ dependencies {
     implementation(libs.androidx.activity.ktx)
     implementation(libs.androidx.runtime.android)
     implementation(libs.androidx.appcompat)
+    implementation(libs.androidx.foundation.layout.android)
+    implementation(libs.androidx.databinding.compiler)
+    implementation(libs.androidx.datastore.core.android)
+    implementation(libs.androidx.datastore.preferences.core.jvm)
     debugImplementation(compose.uiTooling)
 }
 
@@ -131,6 +141,9 @@ compose.desktop {
 
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
+            modules("jdk.unsupported")
+            modules("jdk.unsupported.desktop")
+
             packageName = "org.example.project"
             packageVersion = "1.0.0"
         }

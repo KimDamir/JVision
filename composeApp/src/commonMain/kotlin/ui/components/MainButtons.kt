@@ -7,15 +7,20 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import org.example.project.Screen
+import org.example.project.setHistory
+import ui.navigation.NavigationController
 import vision.autoButton
 
 @Composable
-fun MainButtons(modifier: Modifier = Modifier) {
-    val buttonSize = 40.dp
+fun MainButtons(modifier: Modifier = Modifier, navigationController: NavigationController) {
     Surface(modifier=modifier.fillMaxWidth(), color = MaterialTheme.colorScheme.tertiaryContainer) {
         Row(modifier = modifier, horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically) {
-            Button("List", onClick = {}, modifier = Modifier.size(150.dp, 40.dp).padding(2.dp).weight(1F))
-            Button("History", onClick = {}, modifier = Modifier.size(150.dp, 40.dp).padding(2.dp).weight(1F))
+            Button("Logout", onClick = {
+                navigationController.navigate(Screen.AuthorizationScreen.name)
+            }, modifier = Modifier.size(150.dp, 40.dp).padding(2.dp).weight(1F))
+            historyButton(navigationController,
+                Modifier.size(150.dp, 40.dp).padding(2.dp).weight(1F))
             autoButton( modifier = Modifier.size(150.dp, 40.dp).padding(2.dp).weight(1F))
         }
     }
