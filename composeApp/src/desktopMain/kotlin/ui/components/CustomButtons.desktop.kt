@@ -18,6 +18,7 @@ actual fun loginButton(
 ) {
 }
 
+@Composable
 actual fun registerButton(
     email: MutableState<TextFieldValue>,
     password: MutableState<TextFieldValue>,
@@ -31,14 +32,6 @@ actual fun registerButton(
 actual fun historyButton(
     navigationController: NavigationController,
     modifier: Modifier
-) {
-}
-
-@Composable
-actual fun historyButton(
-    navigationController: NavigationController,
-    modifier: Modifier,
-    callback: (List<Query>) -> Unit
 ) {
 }
 
