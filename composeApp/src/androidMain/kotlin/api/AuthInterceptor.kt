@@ -1,12 +1,7 @@
 package api
 
 import android.content.Context
-import androidx.compose.runtime.collectAsState
-import androidx.compose.ui.platform.LocalContext
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.firstOrNull
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import okhttp3.Interceptor
 import okhttp3.Interceptor.Chain
@@ -25,7 +20,6 @@ class AuthInterceptor(context: Context) : Interceptor {
         runBlocking {
             token = authToken.firstOrNull() ?: ""
         }
-        println(token)
         val original: Request = chain.request()
         val builder: Request.Builder = original.newBuilder()
             .header("Authorization", "Bearer $token")

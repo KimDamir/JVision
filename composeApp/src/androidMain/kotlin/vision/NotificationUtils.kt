@@ -1,6 +1,6 @@
 package vision
 
-import android.R
+import android.R.mipmap.sym_def_app_icon
 import android.annotation.TargetApi
 import android.app.Notification
 import android.app.NotificationChannel
@@ -38,7 +38,7 @@ object NotificationUtils {
 
     private fun createNotification(context: Context): Notification {
         val builder = NotificationCompat.Builder(context, NOTIFICATION_CHANNEL_ID)
-        builder.setSmallIcon(R.mipmap.sym_def_app_icon)
+        builder.setSmallIcon(sym_def_app_icon)
         builder.setContentTitle("JVision")
         builder.setContentText("Capturing screenshot")
         builder.setOngoing(true)

@@ -1,10 +1,5 @@
 package dataclasses
 
-class Dictionary (words: List<Word>) {
-
-}
-
-
 
 class Word(val writings: List<String>, val readings:List<String>, val translations:List<String>) {
     override fun toString(): String {

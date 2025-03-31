@@ -14,6 +14,7 @@ import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.view.*
+import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -21,13 +22,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.Button
-import androidx.compose.material.ButtonColors
 import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.Surface
-import androidx.compose.material3.Text
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -42,7 +38,6 @@ import androidx.savedstate.SavedStateRegistry
 import androidx.savedstate.SavedStateRegistryController
 import androidx.savedstate.SavedStateRegistryOwner
 import androidx.savedstate.setViewTreeSavedStateRegistryOwner
-import api.Client
 import api.sendScreenshot
 import dataclasses.Word
 import jvision.composeapp.generated.resources.Res
@@ -50,7 +45,6 @@ import jvision.composeapp.generated.resources.icon
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import org.example.project.R
 import org.jetbrains.compose.resources.painterResource
 import store.UserStore
 import ui.components.Popup
@@ -121,17 +115,12 @@ class ScreenshotService : LifecycleService(), SavedStateRegistryOwner {
             }
         }
 
-        val resultCode = intent!!.getIntExtra("RESULT_CODE", RESULT_CANCELED)
+        val resultCode = intent.getIntExtra("RESULT_CODE", RESULT_CANCELED)
         val data = intent.getParcelableExtra<Intent>("DATA")
-        print("$resultCode $data Printed Here")
         if (data != null) {
-//            Handler(Looper.getMainLooper()).postDelayed({
-                mediaProjection = mediaProjectionManager.getMediaProjection(resultCode, data)
-                mediaProjection.registerCallback(MediaProjectionStopCallback(), handler)
-
-//            }, 1000)
-
-            }
+            mediaProjection = mediaProjectionManager.getMediaProjection(resultCode, data)
+            mediaProjection.registerCallback(MediaProjectionStopCallback(), handler)
+        }
         return super.onStartCommand(intent, flags, startId)
     }
 
@@ -147,19 +136,15 @@ class ScreenshotService : LifecycleService(), SavedStateRegistryOwner {
     @OptIn(ExperimentalComposeUiApi::class)
     @RequiresApi(Build.VERSION_CODES.R)
     private fun screenshotView(): View {
-        var x = 0F
-        var y = 0F
+        var x: Float
+        var y: Float
         return ComposeView(this).apply {
             setViewTreeSavedStateRegistryOwner(this@ScreenshotService)
             setContent {
                 JvisionTheme {
-                    val xView by remember{mutableStateOf(x)}
-                    val yView by remember{mutableStateOf(y)}
-
                     Surface(modifier = Modifier.background(Color.Transparent).fillMaxSize().pointerInteropFilter { motionEvent ->
                         x = motionEvent.x
                         y = motionEvent.y
-                        println("Clicked! $x  $y")
                         captureScreenshot(x, y)
                         post {
                             windowManager.removeView(this@apply)
@@ -167,7 +152,8 @@ class ScreenshotService : LifecycleService(), SavedStateRegistryOwner {
                         }
                         false
                     }, color = Color.Transparent) {
-                        Text("X: $xView     Y: $yView") }
+
+                    }
                 }
             }
             setViewTreeLifecycleOwner(this@ScreenshotService)
@@ -296,11 +282,9 @@ class ScreenshotService : LifecycleService(), SavedStateRegistryOwner {
         )
         imageReader.setOnImageAvailableListener({ reader ->
             val image = reader.acquireLatestImage()
-            println("Image acquired")
             image?.let {
                 reader.setOnImageAvailableListener(null, null)
                 wordList = sendScreenshot(processImage(image, x, y), this)
-                print(wordList)
                 isLoaded = true
                 reader.close()
                 virtualDisplay.release()
@@ -312,14 +296,16 @@ class ScreenshotService : LifecycleService(), SavedStateRegistryOwner {
         if(isLoaded) {
             isLoaded = false
             errorCount = 0
-            println("Word list: $wordList")
             windowManager.addView(popupView(wordList), getWindowPopupParams(x, y))
         } else {
             errorCount ++
             if (errorCount > 35) {
                 errorCount = 0
                 isLoaded = false
-                println("Canceled window")
+                Toast.makeText(this,
+                    "Не удалось получить ответ от сервера.",
+                    Toast.LENGTH_LONG
+                ).show()
                 return
             }
             Handler(Looper.getMainLooper()).postDelayed(

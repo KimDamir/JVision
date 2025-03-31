@@ -1,15 +1,13 @@
 package org.example.project
 
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.runtime.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
 import dataclasses.Query
 import dataclasses.Word
 import org.jetbrains.compose.ui.tooling.preview.Preview
@@ -46,15 +44,8 @@ fun App(isAuthorized:Boolean) {
 @Preview
 @Composable
 fun CreateMainScreen(modifier: Modifier = Modifier, navigationController: NavigationController) {
-    var word = remember {
+    val word = remember {
         mutableStateOf(wordExample)
-    }
-    fun changeWord(newWord: Word) {
-        word.value = newWord
-    }
-
-    var image by remember {
-        mutableStateOf(ImageBitmap(128, 32))
     }
 
         Column(
@@ -62,14 +53,14 @@ fun CreateMainScreen(modifier: Modifier = Modifier, navigationController: Naviga
         )
         {
             listenForCall ({
-                image = takeScrenshot()
+                takeScrenshot()
             })
 
             WordList(
                 modifier = Modifier
                     .weight(1F),
                 wordList,
-                ::changeWord
+                word
             )
 
             MainButtons(modifier = Modifier.weight(0.3F), navigationController)
@@ -83,26 +74,6 @@ fun CreateMainScreen(modifier: Modifier = Modifier, navigationController: Naviga
         }
     }
 
-@Composable
-fun CreateWordSection(modifier: Modifier = Modifier, word: Word) {
-    val text = word.writings[0]
-    Row (modifier = modifier.fillMaxSize(),
-        horizontalArrangement = Arrangement.SpaceEvenly) {
-        for (i in 0..3) {
-            Surface (modifier=Modifier
-                .weight(1F)
-                .fillMaxSize(),
-                border = BorderStroke(width = 1.dp, color = MaterialTheme.colorScheme.tertiary)
-            )
-            {
-                if (i < text.length)
-                    Text(text=text[i].toString(), textAlign = TextAlign.Center)
-                else
-                    Text(text="")
-            }
-        }
-    }
-}
 
 fun setHistory(setQueries: List<Query>) {
     queries = setQueries

@@ -8,7 +8,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import org.example.project.Screen
-import org.example.project.setHistory
 import ui.navigation.NavigationController
 import vision.autoButton
 

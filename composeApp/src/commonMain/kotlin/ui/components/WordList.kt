@@ -1,11 +1,15 @@
 package ui.components
 
-import androidx.compose.foundation.*
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
@@ -15,7 +19,7 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
 @Preview
-fun WordList(modifier: Modifier = Modifier, words:List<Word>, callback: (Word) -> Unit) {
+fun WordList(modifier: Modifier = Modifier, words:List<Word>, chosenWord: MutableState<Word>) {
     Column(modifier=modifier.fillMaxSize())
     {
         Row (Modifier.weight(1F), horizontalArrangement = Arrangement.SpaceEvenly) {
@@ -32,21 +36,21 @@ fun WordList(modifier: Modifier = Modifier, words:List<Word>, callback: (Word) -
         Column(modifier = Modifier
             .weight(4F)
             .verticalScroll(rememberScrollState())) {
-            var color = Color.White
-            var isChosen = false
+
             if (words.isNotEmpty()) {
                 for (word in words) {
-                    Row(Modifier.fillMaxWidth().height(35.dp).background(color).clickable {
-                        if (!isChosen) {
-                            isChosen = true
-                            color = Color(0x6F7EC9)
-                            callback(word)
+                    val surfaceColor = if (chosenWord.value != word) MaterialTheme.colorScheme.surface
+                    else MaterialTheme.colorScheme.surfaceDim
+                    Row(Modifier.fillMaxWidth().height(35.dp).clickable {
+                        if (chosenWord.value != word) {
+                            chosenWord.value = word
                         }
                     }, horizontalArrangement = Arrangement.SpaceEvenly) {
 
                         Surface(
                             Modifier.weight(1F),
-                            border = BorderStroke(width = 1.dp, color = MaterialTheme.colorScheme.secondary)
+                            border = BorderStroke(width = 1.dp, color = MaterialTheme.colorScheme.secondary),
+                            color=surfaceColor
                         ) {
                             Text(
                                 text = word.writings[0],
@@ -58,7 +62,8 @@ fun WordList(modifier: Modifier = Modifier, words:List<Word>, callback: (Word) -
                         }
                         Surface(
                             Modifier.weight(1F),
-                            border = BorderStroke(width = 1.dp, color = MaterialTheme.colorScheme.secondary)
+                            border = BorderStroke(width = 1.dp, color = MaterialTheme.colorScheme.secondary),
+                            color=surfaceColor
                         ) {
                             Text(
                                 text = word.readings[0],
@@ -70,7 +75,8 @@ fun WordList(modifier: Modifier = Modifier, words:List<Word>, callback: (Word) -
                         }
                         Surface(
                             Modifier.weight(1F),
-                            border = BorderStroke(width = 1.dp, color = MaterialTheme.colorScheme.secondary)
+                            border = BorderStroke(width = 1.dp, color = MaterialTheme.colorScheme.secondary),
+                            color=surfaceColor
                         ) {
                             Text(
                                 text = word.translations[0],
