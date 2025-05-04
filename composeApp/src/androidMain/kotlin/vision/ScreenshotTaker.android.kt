@@ -10,12 +10,12 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.test.core.app.takeScreenshot
+import api.sendScreenshot
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -28,9 +28,7 @@ const val IMAGE_WIDTH = 256
 const val IMAGE_HEIGHT = 80
 
 @RequiresApi(Build.VERSION_CODES.O)
-actual fun takeScrenshot(): ImageBitmap {
-    val bitmap = takeScreenshot()
-    return  bitmap.asImageBitmap()
+actual fun takeScreenshot() {
 }
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -45,9 +43,8 @@ actual fun listenForCall(action: () -> Unit) {
 actual fun autoButton(modifier: Modifier) {
     val context = LocalContext.current
     val activity = context.getActivityOrNull() as MainActivity
-    val open = rememberSaveable { mutableStateOf(false) }
+    val open = remember { mutableStateOf(false) }
     Button("Auto", onClick = {
-        open.value = !open.value
         if (open.value) {
             context.stopService(Intent(context, ScreenshotService::class.java))
             println("Service stopped")
@@ -62,6 +59,7 @@ actual fun autoButton(modifier: Modifier) {
             context.startForegroundService(intent)
             println("Service started")
         }
+        open.value = !open.value
     },
         modifier = modifier)
 }
@@ -82,7 +80,7 @@ fun processImage(image:Image, x:Float, y:Float): Bitmap {
             copyPixelsFromBuffer(buffer)
     }
     var intX = x.toInt() - IMAGE_WIDTH/2
-    val intY = y.toInt() - IMAGE_HEIGHT/2
+    val intY = y.toInt() - IMAGE_HEIGHT/2 - 17
     if (intX + IMAGE_WIDTH > bitmap.width) {
         intX = bitmap.width - IMAGE_WIDTH
     } else if (intX < 0) intX = 0

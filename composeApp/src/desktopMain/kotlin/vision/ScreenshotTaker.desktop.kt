@@ -1,75 +1,73 @@
 package vision
 
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.res.loadImageBitmap
+import api.sendScreenshot
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import lc.kra.system.keyboard.GlobalKeyboardHook
 import lc.kra.system.keyboard.event.GlobalKeyAdapter
 import lc.kra.system.keyboard.event.GlobalKeyEvent
-import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.OkHttpClient
-import okhttp3.Request
-import okhttp3.RequestBody
-import okhttp3.RequestBody.Companion.toRequestBody
+import org.example.project.changeWordList
+import org.jetbrains.compose.resources.ExperimentalResourceApi
+import ui.components.Button
+import vision.HookListenerService.Companion.endService
+import vision.HookListenerService.Companion.startService
 import java.awt.MouseInfo
+import java.awt.Point
 import java.awt.Rectangle
 import java.awt.Robot
 import java.awt.image.BufferedImage
 import java.awt.image.DataBufferInt
-import java.io.ByteArrayInputStream
-import java.io.ByteArrayOutputStream
-import java.io.IOException
-import javax.imageio.ImageIO
-import com.google.gson.Gson
-import jvision.composeapp.generated.resources.Res
-import org.jetbrains.compose.resources.ExperimentalResourceApi
-import org.jetbrains.compose.resources.decodeToImageBitmap
 
 const val IMAGE_WIDTH = 128
 const val IMAGE_HEIGHT = 32
 
 @OptIn(ExperimentalResourceApi::class)
-actual fun takeScrenshot(): ImageBitmap {
-    val client = OkHttpClient()
+actual fun takeScreenshot() {
     val robot = Robot()
     val cursorPosition = MouseInfo.getPointerInfo().location
     val rectangle = Rectangle(cursorPosition.x - IMAGE_WIDTH/2, cursorPosition.y - IMAGE_HEIGHT/2,
         IMAGE_WIDTH, IMAGE_HEIGHT)
     val image = robot.createScreenCapture(rectangle)
-    val outputStream = ByteArrayOutputStream()
-    ImageIO.write(image, "bmp", outputStream)
-    val byteArray = outputStream.toByteArray()
-    val JSON = "application/json; charset=utf-8".toMediaType()
-    val body: RequestBody = byteArray.toRequestBody(JSON)
-    val request = Request.Builder()
-        .url("http://127.0.0.1:9000/ocr")
-        .post(body)
-        .build()
-    println(request.headers)
-    try {
-        client.newCall(request).execute().use { response ->
-            if (!response.isSuccessful) {
-                throw IOException("Запрос к серверу не был успешен:" +
-                        " ${response.code} ${response.message}")
-            }
-            val result = response.body!!.string()
-            println(result)
+    println("Changing word list")
+    runBlocking{
+        launch {
+            changeWordList(sendScreenshot(image))
         }
-    } catch (e: IOException) {
-        println("Ошибка подключения: $e")
     }
-    val bitmap = ByteArrayInputStream(byteArray).readAllBytes().decodeToImageBitmap()
-    return  bitmap
+}
+fun takeCustomScreenshot(firstPosition: Point) {
+    val robot = Robot()
+    val lastPosition = MouseInfo.getPointerInfo().location
+    val width = lastPosition.x - firstPosition.x
+    val height = lastPosition.y - firstPosition.y
+//    if (width < IMAGE_WIDTH && height < IMAGE_HEIGHT) {
+//        takeScreenshot()
+//        return
+//    }
+    val rectangle = Rectangle(firstPosition.x, firstPosition.y,
+        width, height)
+    val image = robot.createScreenCapture(rectangle)
+    println("Changing word list")
+    runBlocking{
+        launch {
+            changeWordList(sendScreenshot(image))
+        }
+    }
 }
 @Composable
 actual fun listenForCall(action: ()->Unit) {
     val hook = GlobalKeyboardHook(true)
-
+    var run = true
     hook.addKeyListener(object: GlobalKeyAdapter() {
         override fun keyPressed(event: GlobalKeyEvent) {
             if (event.virtualKeyCode == GlobalKeyEvent.VK_SHIFT) {
                 action()
+            }
+            if (event.virtualKeyCode == GlobalKeyEvent.VK_ESCAPE) {
+                hook.shutdownHook()
             }
         }
 
@@ -138,4 +136,15 @@ class Response() {
 
 @Composable
 actual fun autoButton(modifier: Modifier) {
+    var open by remember { mutableStateOf(false) }
+
+    Button("Auto", onClick = {
+        if (open) {
+            endService()
+        } else {
+            startService()
+        }
+        open = !open
+    },
+        modifier = modifier)
 }

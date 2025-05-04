@@ -5,6 +5,7 @@ import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.content.res.Resources
 import android.graphics.PixelFormat
+import android.graphics.Rect
 import android.hardware.display.DisplayManager
 import android.hardware.display.VirtualDisplay
 import android.media.ImageReader
@@ -14,8 +15,10 @@ import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.view.*
+import android.view.WindowInsetsAnimation.Bounds
 import android.widget.Toast
 import androidx.annotation.RequiresApi
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -26,7 +29,11 @@ import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.Surface
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Canvas
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInteropFilter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.ComposeView
@@ -45,6 +52,8 @@ import jvision.composeapp.generated.resources.icon
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import org.example.project.changeWordList
 import org.jetbrains.compose.resources.painterResource
 import store.UserStore
 import ui.components.Popup
@@ -66,9 +75,11 @@ class ScreenshotService : LifecycleService(), SavedStateRegistryOwner {
     private lateinit var mediaProjection: MediaProjection
     private lateinit var handler: Handler
     private lateinit var screenshotView: View
+    private lateinit var afterScreenshotView: View
     private lateinit var wordList: List<Word>
     private var isLoaded: Boolean = false
     private var errorCount = 0
+    private lateinit var bounds: Rect
 
     @RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
     override fun onCreate() {
@@ -88,6 +99,7 @@ class ScreenshotService : LifecycleService(), SavedStateRegistryOwner {
         windowManager = getSystemService<WindowManager>()!!
         layoutInflater = getSystemService<LayoutInflater>()!!
         windowMetrics = windowManager.maximumWindowMetrics
+        bounds = windowMetrics.bounds
         mediaProjectionManager = getSystemService(MediaProjectionManager::class.java) as MediaProjectionManager
     }
 
@@ -145,9 +157,24 @@ class ScreenshotService : LifecycleService(), SavedStateRegistryOwner {
                     Surface(modifier = Modifier.background(Color.Transparent).fillMaxSize().pointerInteropFilter { motionEvent ->
                         x = motionEvent.x
                         y = motionEvent.y
+
                         captureScreenshot(x, y)
                         post {
-                            windowManager.removeView(this@apply)
+                            screenshotView.apply {
+                                setContent {
+                                    JvisionTheme {
+                                        Canvas(
+                                            modifier = Modifier.background(Color.Transparent).fillMaxSize()
+                                        ) {
+                                            drawRect(color = Color.Red,
+                                                size = Size(IMAGE_WIDTH.toFloat(), IMAGE_HEIGHT.toFloat()),
+                                                topLeft = Offset(x= (x- IMAGE_WIDTH/2), y=(y- IMAGE_HEIGHT/2)),
+                                                style = Stroke(width = 3.dp.toPx())
+                                            )
+                                        }
+                                    }
+                                }
+                            }
                             waitForLoaded(x, y)
                         }
                         false
@@ -191,8 +218,6 @@ class ScreenshotService : LifecycleService(), SavedStateRegistryOwner {
 
     @RequiresApi(Build.VERSION_CODES.R)
     fun getWindowButtonParams(): WindowManager.LayoutParams {
-        val windowMetrics = windowManager.maximumWindowMetrics
-        val bounds = windowMetrics.bounds
         return WindowManager.LayoutParams(
             250,  // Width
             250,  // Height
@@ -209,8 +234,6 @@ class ScreenshotService : LifecycleService(), SavedStateRegistryOwner {
 
     @RequiresApi(Build.VERSION_CODES.R)
     fun getWindowScreenshotParams(): WindowManager.LayoutParams {
-        val windowMetrics = windowManager.maximumWindowMetrics
-        val bounds = windowMetrics.bounds
         return WindowManager.LayoutParams(
             bounds.width(),  // Width
             bounds.height(),  // Height
@@ -233,6 +256,7 @@ class ScreenshotService : LifecycleService(), SavedStateRegistryOwner {
             }
             setOnTouchListener { _, _ ->
                 post {
+                    windowManager.removeView(screenshotView)
                     windowManager.removeView(this)
                 }
                 performClick()
@@ -244,13 +268,12 @@ class ScreenshotService : LifecycleService(), SavedStateRegistryOwner {
 
     @RequiresApi(Build.VERSION_CODES.R)
     fun getWindowPopupParams(x:Float, y:Float): WindowManager.LayoutParams {
-        val windowMetrics = windowManager.maximumWindowMetrics
-        val bounds = windowMetrics.bounds
+        val actualY = if (y + bounds.width()/2 > bounds.height()) y - 2*bounds.width()/3  else y
         val layoutParams = WindowManager.LayoutParams(
             bounds.width(),  // Width
             bounds.width()/2,  // Height
             0,  // X position
-            y.toInt(),  // Y position
+            actualY.toInt(),  // Y position
             WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
             WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS or
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
@@ -285,6 +308,11 @@ class ScreenshotService : LifecycleService(), SavedStateRegistryOwner {
             image?.let {
                 reader.setOnImageAvailableListener(null, null)
                 wordList = sendScreenshot(processImage(image, x, y), this)
+                runBlocking{
+                    launch {
+                        changeWordList(wordList)
+                    }
+                }
                 isLoaded = true
                 reader.close()
                 virtualDisplay.release()

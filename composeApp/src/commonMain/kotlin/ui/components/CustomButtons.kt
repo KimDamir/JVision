@@ -2,10 +2,15 @@ package ui.components
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.State
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.TextFieldValue
 import dataclasses.Query
 import ui.navigation.NavigationController
+
+enum class Options(val text: String) {
+    HOUR("Last hour"), DAY("Last 24 hours"), WEEK("Last week")
+}
 
 @Composable
 expect fun loginButton(
@@ -34,5 +39,8 @@ expect fun historyButton(
 expect fun customWordColumn(
     navigationController: NavigationController,
     modifier: Modifier,
-    queries: List<Query>
+    queries: State<List<Query>>
 )
+
+@Composable
+expect fun HistoryDropdownMenu()

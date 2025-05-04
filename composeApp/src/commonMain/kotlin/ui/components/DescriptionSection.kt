@@ -16,8 +16,7 @@ fun DescriptionSection (modifier: Modifier = Modifier, word: Word, isEmpty: Bool
     Surface(modifier=modifier.verticalScroll(rememberScrollState()), border = BorderStroke(width = 1.dp, color = MaterialTheme.colorScheme.tertiary))
     {
         if (!isEmpty)
-            Text(text = "${word.writings}    ${word.readings} \n" +
-                    word.translations
+            Text(text = "Writing: ${word.writings} \nReading: ${word.readings} \nDefinition: ${word.translations}"
             )
     }
 }

@@ -3,13 +3,11 @@ package org.example.project
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import dataclasses.Query
 import dataclasses.Word
+import kotlinx.coroutines.flow.MutableSharedFlow
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import ui.components.*
 import ui.navigation.NavigationController
@@ -17,14 +15,13 @@ import ui.navigation.NavigationHost
 import ui.navigation.composable
 import ui.navigation.rememberNavController
 import ui.theme.JvisionTheme
-import vision.listenForCall
-import vision.takeScrenshot
+import util.authorizationNavigationActions
 
-var queries:List<Query> = listOf()
+
+var queries = MutableSharedFlow<List<Query>>()
 var wordExample = (Word(listOf("電車"), listOf("でんしゃ"), listOf("Train")))
 
-var wordList = listOf(wordExample, Word(listOf("結局"), listOf("けっきょく"), listOf("In the end")),
-    Word(listOf(""), listOf(""), listOf("")), wordExample, wordExample, wordExample, wordExample)
+var wordList = MutableSharedFlow<List<Word>>()
 
 @Composable
 fun App(isAuthorized:Boolean) {
@@ -47,19 +44,18 @@ fun CreateMainScreen(modifier: Modifier = Modifier, navigationController: Naviga
     val word = remember {
         mutableStateOf(wordExample)
     }
+    val words = wordList.collectAsState(listOf(wordExample, Word(listOf("結局"), listOf("けっきょく"), listOf("In the end")),
+        Word(listOf(""), listOf(""), listOf("")), wordExample, wordExample, wordExample, wordExample))
 
         Column(
             modifier = modifier
         )
         {
-            listenForCall ({
-                takeScrenshot()
-            })
 
             WordList(
                 modifier = Modifier
                     .weight(1F),
-                wordList,
+                words.value,
                 word
             )
 
@@ -75,13 +71,14 @@ fun CreateMainScreen(modifier: Modifier = Modifier, navigationController: Naviga
     }
 
 
-fun setHistory(setQueries: List<Query>) {
-    queries = setQueries
+suspend fun setHistory(setQueries: List<Query>) {
+    queries.emit(setQueries)
 }
 
-fun changeWordList(newWordList: List<Word>) {
-    wordList = newWordList
-    wordExample = wordList[0]
+suspend fun changeWordList(newWordList: List<Word>) {
+    wordList.emit(newWordList)
+    wordExample = if (newWordList.isNotEmpty()) newWordList[0]
+    else Word(listOf(""), listOf(""), listOf(""))
 }
 
 enum class Screen(
@@ -113,6 +110,7 @@ fun CustomNavigationHost(
 
         composable(Screen.AuthorizationScreen.name) {
             AuthorizationScreen(navController)
+            authorizationNavigationActions()
         }
 
         composable(Screen.RegistrationScreen.name) {

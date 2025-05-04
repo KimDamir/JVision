@@ -16,9 +16,10 @@ import store.UserStore
 import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.util.concurrent.CountDownLatch
+import const.URL
+import ui.components.Options
 
-val URL = "https://70f2-37-59-30-95.ngrok-free.app"
- fun sendScreenshot(screenshot: Bitmap, context: Context): List<Word> {
+fun sendScreenshot(screenshot: Bitmap, context: Context): List<Word> {
     val client = getInstance(context).client
     val outputStream = ByteArrayOutputStream()
     screenshot.compress(Bitmap.CompressFormat.PNG, 100, outputStream)
@@ -45,6 +46,33 @@ val URL = "https://70f2-37-59-30-95.ngrok-free.app"
         println("Ошибка подключения: $e")
     }
     return listOf(Word(listOf(""), listOf(""), listOf("")))
+}
+fun checkToken(context: Context): Boolean {
+    val client = getInstance(context).client
+    var isSuccess = false
+    val request = Request.Builder()
+        .url("$URL/token")
+        .get()
+        .build()
+    val countDown = CountDownLatch(1)
+    try {
+        client.newCall(request).enqueue(object : Callback {
+            override fun onFailure(call: Call, e: IOException) {
+                e.printStackTrace()
+                countDown.countDown()
+            }
+            override fun onResponse(call: Call, response: Response) {
+                response.use {
+                    isSuccess =  response.code == 200
+                    countDown.countDown()
+                }
+            }
+        })
+    } catch (e: IOException) {
+        println("Ошибка подключения: $e")
+    }
+    countDown.await()
+    return isSuccess
 }
 
 fun login(email: String, password:String, context: Context): Boolean {
@@ -129,13 +157,14 @@ fun register(user: User, context: Context): Boolean {
     return isRegistrationSuccessful
 }
 
-fun getHistory(context: Context): List<Query> {
+fun getHistory(context: Context, filter:String = Options.DAY.text): List<Query> {
     val client = getInstance(context).client
-    var history: List<Query> = listOf(Query("", "", "", ""))
+    var history: List<Query> = listOf()
     val countDown = CountDownLatch(1)
     val request = Request.Builder()
         .url("$URL/history")
         .get()
+        .headers(Headers.Builder().addUnsafeNonAscii("Filter", filter).build())
         .build()
     client.newCall(request).enqueue(object : Callback {
         override fun onFailure(call: Call, e: IOException) {

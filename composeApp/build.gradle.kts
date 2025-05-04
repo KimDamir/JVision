@@ -30,7 +30,7 @@ kotlin {
             implementation(libs.okhttp)
             implementation(libs.com.google.code.gson.gson2)
             implementation(libs.androidx.core)
-            implementation(libs.androidx.appcompat.v131)
+            implementation(libs.androidx.appcompat)
             implementation(libs.androidx.activity.ktx)
             implementation(libs.androidx.fragment.ktx)
             implementation(libs.androidx.lifecycle.service)
@@ -45,16 +45,16 @@ kotlin {
             implementation(compose.ui)
             implementation(compose.components.resources)
             implementation(compose.components.uiToolingPreview)
-            implementation(libs.androidx.lifecycle.viewmodel)
-            implementation(libs.androidx.lifecycle.runtime.compose)
             implementation(compose.material3)
             implementation(libs.kotlinx.coroutines.core)
         }
         desktopMain.dependencies {
+            implementation(libs.sonner.v038)
             implementation(compose.desktop.currentOs)
             implementation(libs.system.hook)
             implementation(libs.okhttp)
             implementation(libs.com.google.code.gson.gson2)
+            implementation(libs.androidx.lifecycle.livedata.core.ktx)
         }
     }
 }
@@ -100,6 +100,7 @@ dependencies {
     implementation(libs.androidx.databinding.compiler)
     implementation(libs.androidx.datastore.core.android)
     implementation(libs.androidx.datastore.preferences.core.jvm)
+    implementation(libs.androidx.lifecycle.livedata.core.ktx)
     debugImplementation(compose.uiTooling)
 }
 

@@ -3,11 +3,10 @@ package ui.components
 import android.widget.Toast
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -20,10 +19,13 @@ import api.register
 import api.sendQuery
 import dataclasses.Query
 import dataclasses.User
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import org.example.project.Screen
 import org.example.project.changeWordList
 import org.example.project.setHistory
 import ui.navigation.NavigationController
+
 
 @Composable
 actual fun loginButton(
@@ -43,15 +45,16 @@ actual fun loginButton(
         onClick = {
             if (!emailRegex.matches(email.value.text) || password.toString() == "") {
                 hasError.value = true
-            }
-            val result = login(email.value.text, password.value.text, context)
-            if (result) {
-                navigationController.navigate(Screen.HomeScreen.name)
             } else {
-                Toast.makeText(context,
-                    "Пользователь не найден.",
-                    Toast.LENGTH_LONG
-                ).show()
+                val result = login(email.value.text, password.value.text, context)
+                if (result) {
+                    navigationController.navigate(Screen.HomeScreen.name)
+                } else {
+                    Toast.makeText(context,
+                        "Пользователь не найден.",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
             }
         })
 }
@@ -90,24 +93,33 @@ actual fun historyButton(
     val context = LocalContext.current
     Button("History", onClick = {
         val queries = getHistory(context)
-        setHistory(queries)
+        runBlocking {
+            launch {
+                setHistory(queries)
+            }
+        }
         navigationController.navigate(Screen.HistoryScreen.name)
     }, modifier = modifier)
 }
 
 @Composable
-actual fun customWordColumn(navigationController: NavigationController, modifier: Modifier, queries: List<Query>) {
+actual fun customWordColumn(navigationController: NavigationController, modifier: Modifier, queries: State<List<Query>>) {
     val context = LocalContext.current
-    Column(modifier) {
+    val queryValues = queries.value
+    LazyColumn(modifier) {
         var color = Color.White
         var isChosen = false
-        if (queries.isNotEmpty()) {
-            for (query in queries) {
+        if (queryValues.isNotEmpty()) {
+            items (queryValues) { query: Query ->
                 Row(Modifier.fillMaxWidth().height(35.dp).background(color).clickable {
                     if (!isChosen) {
                         isChosen = true
                         color = Color(0x6F7EC9)
-                        changeWordList(sendQuery(context, query.query_text))
+                        runBlocking {
+                            launch {
+                                changeWordList(sendQuery(context, query.query_text))
+                            }
+                        }
                         navigationController.navigate(Screen.HomeScreen.name)
                     }
                 }, horizontalArrangement = Arrangement.SpaceEvenly) {
@@ -149,6 +161,37 @@ actual fun customWordColumn(navigationController: NavigationController, modifier
                         )
                     }
                 }
+            }
+        }
+    }
+}
+
+@Composable
+actual fun HistoryDropdownMenu() {
+    var expanded by remember { mutableStateOf(false) }
+    var chosen by remember { mutableStateOf(Options.HOUR) }
+    val context = LocalContext.current
+    val options = Options.entries.toTypedArray()
+    val scope = rememberCoroutineScope()
+    Box ()
+    {
+        Text(chosen.text, modifier = Modifier.clickable {
+            expanded = !expanded
+        })
+        DropdownMenu(
+            expanded,
+            onDismissRequest = {expanded = false}
+        ) {
+            for (option in options) {
+                DropdownMenuItem(
+                    text = {Text(option.text)},
+                    onClick = {
+                        chosen = option
+                        scope.launch {
+                            setHistory(getHistory(context, option.text))
+                        }
+                        expanded = false
+                    })
             }
         }
     }

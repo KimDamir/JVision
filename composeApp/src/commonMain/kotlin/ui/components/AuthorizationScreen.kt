@@ -2,18 +2,22 @@ package ui.components
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.Surface
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import jvision.composeapp.generated.resources.Res
@@ -25,14 +29,17 @@ import ui.navigation.NavigationController
 @Composable
 fun AuthorizationScreen(navigationController: NavigationController) {
 
-    val email = remember {
+    var email = remember {
         mutableStateOf(TextFieldValue())
     }
-    val password = remember {
+    var password = remember {
         mutableStateOf(TextFieldValue())
     }
     val hasError = remember {
         mutableStateOf(false)
+    }
+    val focusRequester = remember {
+        FocusRequester()
     }
     Column {
         Surface(modifier = Modifier.weight(1F).fillMaxWidth())
@@ -54,11 +61,15 @@ fun AuthorizationScreen(navigationController: NavigationController) {
                         modifier = Modifier.align(Alignment.CenterHorizontally),
                         placeholder = {Text("abc@email.com", color = MaterialTheme.colorScheme.outline)}
                     )
+
                     Spacer(modifier = Modifier.height(15.dp))
-                    TextField(value = password.value, onValueChange = {password.value = it},
+                    TextField(value = password.value , onValueChange = {password.value = it},
                         modifier = Modifier.align(Alignment.CenterHorizontally).background(color = Color.White)
                         ,
-                        placeholder = {Text("Your password", color = MaterialTheme.colorScheme.outline)})
+                        placeholder = {Text("Your password", color = MaterialTheme.colorScheme.outline)},
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                        visualTransformation = PasswordVisualTransformation()
+                    )
                     if (hasError.value) {
                         Text("Wrong email or password", color = MaterialTheme.colorScheme.error,
                             modifier = Modifier.align(Alignment.CenterHorizontally))

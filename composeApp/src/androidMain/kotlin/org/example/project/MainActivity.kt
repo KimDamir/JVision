@@ -9,9 +9,8 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
-import kotlinx.coroutines.flow.firstOrNull
+import api.checkToken
 import kotlinx.coroutines.runBlocking
-import store.UserStore
 
 
 class MainActivity : AppCompatActivity() {
@@ -47,10 +46,7 @@ fun AppAndroidPreview() {
 @Composable
 fun AppWrapper() {
     val context = LocalContext.current
-    val token: String
-    runBlocking {
-        token = UserStore(context).getAccessToken.firstOrNull() ?: ""
-    }
-    val isAuthorized = token != ""
+    val isAuthorized = checkToken(context)
+    println(isAuthorized)
     App(isAuthorized)
 }
