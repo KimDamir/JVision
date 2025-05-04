@@ -15,7 +15,6 @@ import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.view.*
-import android.view.WindowInsetsAnimation.Bounds
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Canvas
@@ -31,7 +30,6 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Canvas
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInteropFilter
@@ -75,7 +73,6 @@ class ScreenshotService : LifecycleService(), SavedStateRegistryOwner {
     private lateinit var mediaProjection: MediaProjection
     private lateinit var handler: Handler
     private lateinit var screenshotView: View
-    private lateinit var afterScreenshotView: View
     private lateinit var wordList: List<Word>
     private var isLoaded: Boolean = false
     private var errorCount = 0

@@ -1,7 +1,6 @@
 package vision
 
 import androidx.compose.runtime.*
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import api.sendScreenshot
 import kotlinx.coroutines.launch
@@ -60,7 +59,6 @@ fun takeCustomScreenshot(firstPosition: Point) {
 @Composable
 actual fun listenForCall(action: ()->Unit) {
     val hook = GlobalKeyboardHook(true)
-    var run = true
     hook.addKeyListener(object: GlobalKeyAdapter() {
         override fun keyPressed(event: GlobalKeyEvent) {
             if (event.virtualKeyCode == GlobalKeyEvent.VK_SHIFT) {
@@ -91,10 +89,10 @@ fun get2DPixelArrayFast(image: BufferedImage): Array<IntArray> {
         var col = 0
         while (valueIndex + numberOfValues - 1 < pixelData.size) {
             var argb = 0
-            argb += ((pixelData[valueIndex].toInt() and 0xff) shl 24) // alpha value
-            argb += (pixelData[valueIndex + 1].toInt() and 0xff) // blue value
-            argb += ((pixelData[valueIndex + 2].toInt() and 0xff) shl 8) // green value
-            argb += ((pixelData[valueIndex + 3].toInt() and 0xff) shl 16) // red value
+            argb += ((pixelData[valueIndex] and 0xff) shl 24) // alpha value
+            argb += (pixelData[valueIndex + 1] and 0xff) // blue value
+            argb += ((pixelData[valueIndex + 2] and 0xff) shl 8) // green value
+            argb += ((pixelData[valueIndex + 3] and 0xff) shl 16) // red value
             result[row][col] = argb
 
             col++
@@ -112,9 +110,9 @@ fun get2DPixelArrayFast(image: BufferedImage): Array<IntArray> {
         while (valueIndex + numberOfValues - 1 < pixelData.size) {
             var argb = 0
             argb += -16777216 // 255 alpha value (fully opaque)
-            argb += (pixelData[valueIndex].toInt() and 0xff) // blue value
-            argb += ((pixelData[valueIndex + 1].toInt() and 0xff) shl 8) // green value
-            argb += ((pixelData[valueIndex + 2].toInt() and 0xff) shl 16) // red value
+            argb += (pixelData[valueIndex] and 0xff) // blue value
+            argb += ((pixelData[valueIndex + 1] and 0xff) shl 8) // green value
+            argb += ((pixelData[valueIndex + 2] and 0xff) shl 16) // red value
             result[row][col] = argb
 
             col++
@@ -129,10 +127,6 @@ fun get2DPixelArrayFast(image: BufferedImage): Array<IntArray> {
     return result
 }
 
-
-class Response() {
-    val prediction: String = ""
-}
 
 @Composable
 actual fun autoButton(modifier: Modifier) {

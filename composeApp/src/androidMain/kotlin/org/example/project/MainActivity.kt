@@ -10,7 +10,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import api.checkToken
-import kotlinx.coroutines.runBlocking
 
 
 class MainActivity : AppCompatActivity() {

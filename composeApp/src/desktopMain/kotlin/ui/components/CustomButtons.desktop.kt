@@ -98,10 +98,7 @@ actual fun historyButton(
 ) {
     val scope = rememberCoroutineScope()
     Button("History", onClick = {
-        runBlocking { launch {
-            setHistory(getHistory())
-        }
-        }
+        scope.launch { setHistory(getHistory()) }
         navigationController.navigate(Screen.HistoryScreen.name)
     }, modifier = modifier)
 }

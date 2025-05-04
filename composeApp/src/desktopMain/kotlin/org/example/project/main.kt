@@ -9,6 +9,6 @@ fun main() = application {
         onCloseRequest = ::exitApplication,
         title = "JVision",
     ) {
-        App(true)
+        App(checkToken())
     }
 }
