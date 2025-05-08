@@ -1,12 +1,11 @@
 package dataclasses
 
 
-class Word(val writings: List<String>, val readings:List<String>, val translations:List<String>) {
+data class Word(val writings: List<String>, val readings:List<String>, val translations:List<String>) {
     override fun toString(): String {
         return this.writings[0]
     }
 }
-
 class Query(val writing: String, val translation:String, val query_text: String, val time: String)
 
 class User(val email: String, val username: String, val password: String)

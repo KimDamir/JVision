@@ -44,14 +44,14 @@ import androidx.savedstate.SavedStateRegistryController
 import androidx.savedstate.SavedStateRegistryOwner
 import androidx.savedstate.setViewTreeSavedStateRegistryOwner
 import api.sendScreenshot
+import const.viewmodel.JVisionViewModel
 import dataclasses.Word
+import dataclasses.wordToParcelable
 import jvision.composeapp.generated.resources.Res
 import jvision.composeapp.generated.resources.icon
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
-import org.example.project.changeWordList
 import org.jetbrains.compose.resources.painterResource
 import store.UserStore
 import ui.components.Popup
@@ -74,6 +74,7 @@ class ScreenshotService : LifecycleService(), SavedStateRegistryOwner {
     private lateinit var handler: Handler
     private lateinit var screenshotView: View
     private lateinit var wordList: List<Word>
+    private lateinit var vm: JVisionViewModel
     private var isLoaded: Boolean = false
     private var errorCount = 0
     private lateinit var bounds: Rect
@@ -305,11 +306,6 @@ class ScreenshotService : LifecycleService(), SavedStateRegistryOwner {
             image?.let {
                 reader.setOnImageAvailableListener(null, null)
                 wordList = sendScreenshot(processImage(image, x, y), this)
-                runBlocking{
-                    launch {
-                        changeWordList(wordList)
-                    }
-                }
                 isLoaded = true
                 reader.close()
                 virtualDisplay.release()
@@ -322,6 +318,9 @@ class ScreenshotService : LifecycleService(), SavedStateRegistryOwner {
             isLoaded = false
             errorCount = 0
             windowManager.addView(popupView(wordList), getWindowPopupParams(x, y))
+            val intent = Intent("WordList")
+            intent.putParcelableArrayListExtra("WordList", wordToParcelable(wordList))
+            this.sendBroadcast(intent)
         } else {
             errorCount ++
             if (errorCount > 35) {
@@ -331,6 +330,7 @@ class ScreenshotService : LifecycleService(), SavedStateRegistryOwner {
                     "Не удалось получить ответ от сервера.",
                     Toast.LENGTH_LONG
                 ).show()
+                windowManager.removeView(screenshotView)
                 return
             }
             Handler(Looper.getMainLooper()).postDelayed(

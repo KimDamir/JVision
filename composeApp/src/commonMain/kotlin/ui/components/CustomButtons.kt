@@ -5,7 +5,9 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.TextFieldValue
+import const.viewmodel.JVisionViewModel
 import dataclasses.Query
+import kotlinx.coroutines.CoroutineScope
 import ui.navigation.NavigationController
 
 enum class Options(val text: String) {
@@ -32,15 +34,17 @@ expect fun registerButton(
 @Composable
 expect fun historyButton(
     navigationController: NavigationController,
-    modifier: Modifier
+    modifier: Modifier,
+    vm: JVisionViewModel
 )
 
 @Composable
 expect fun customWordColumn(
     navigationController: NavigationController,
     modifier: Modifier,
-    queries: State<List<Query>>
+    vm: JVisionViewModel,
+    queries: List<Query>
 )
 
 @Composable
-expect fun HistoryDropdownMenu()
+expect fun HistoryDropdownMenu(vm: JVisionViewModel)

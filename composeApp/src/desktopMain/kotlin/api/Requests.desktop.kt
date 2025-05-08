@@ -216,6 +216,7 @@ fun sendQuery(query_text:String): List<Word> {
         }
     })
     countDown.await()
+    println(wordList)
     return wordList
 }
 

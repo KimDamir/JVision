@@ -5,9 +5,11 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import const.viewmodel.JVisionViewModel
 import dataclasses.Query
 import dataclasses.Word
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.collect
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import ui.components.*
 import ui.navigation.NavigationController
@@ -18,21 +20,18 @@ import ui.theme.JvisionTheme
 import util.authorizationNavigationActions
 
 
-var queries = MutableSharedFlow<List<Query>>()
-var wordExample = (Word(listOf("電車"), listOf("でんしゃ"), listOf("Train")))
-
-var wordList = MutableSharedFlow<List<Word>>()
-
 @Composable
-fun App(isAuthorized:Boolean) {
+fun App(isAuthorized:Boolean, vm:JVisionViewModel = JVisionViewModel()) {
+    val scope = rememberCoroutineScope()
     val startScreen =  if (!isAuthorized) Screen.AuthorizationScreen.name else Screen.HomeScreen.name
     val navigationController by rememberNavController(startScreen)
     val currentScreen by remember {
         navigationController.currentScreen
     }
+    navigationController.coroutineScope = scope
     JvisionTheme {
         Box(modifier = Modifier.fillMaxSize()) {
-            CustomNavigationHost(navigationController)
+            CustomNavigationHost(navigationController, vm)
         }
     }
 }
@@ -40,12 +39,9 @@ fun App(isAuthorized:Boolean) {
 
 @Preview
 @Composable
-fun CreateMainScreen(modifier: Modifier = Modifier, navigationController: NavigationController) {
-    val word = remember {
-        mutableStateOf(wordExample)
-    }
-    val words = wordList.collectAsState(listOf(wordExample, Word(listOf("結局"), listOf("けっきょく"), listOf("In the end")),
-        Word(listOf(""), listOf(""), listOf("")), wordExample, wordExample, wordExample, wordExample))
+fun CreateMainScreen(modifier: Modifier = Modifier, navigationController: NavigationController, viewModel: JVisionViewModel,
+                     words: List<Word>) {
+    val word = if(words.isNotEmpty()) words[0] else Word(listOf(), listOf(), listOf())
 
         Column(
             modifier = modifier
@@ -55,31 +51,21 @@ fun CreateMainScreen(modifier: Modifier = Modifier, navigationController: Naviga
             WordList(
                 modifier = Modifier
                     .weight(1F),
-                words.value,
-                word
+                words,
+                word,
+                viewModel
             )
 
-            MainButtons(modifier = Modifier.weight(0.3F), navigationController)
+            MainButtons(modifier = Modifier.weight(0.3F), navigationController, viewModel)
 
             DescriptionSection(
                 modifier = Modifier
                     .weight(1F)
                     .fillMaxSize(),
-                word = word.value
+                word = word
             )
         }
     }
-
-
-suspend fun setHistory(setQueries: List<Query>) {
-    queries.emit(setQueries)
-}
-
-suspend fun changeWordList(newWordList: List<Word>) {
-    wordList.emit(newWordList)
-    wordExample = if (newWordList.isNotEmpty()) newWordList[0]
-    else Word(listOf(""), listOf(""), listOf(""))
-}
 
 enum class Screen(
     val label: String,
@@ -101,11 +87,14 @@ enum class Screen(
 
 @Composable
 fun CustomNavigationHost(
-    navController: NavigationController
+    navController: NavigationController,
+    viewModel: JVisionViewModel
 ) {
+    val queries = viewModel.queries.collectAsState(listOf())
+    val wordList = viewModel.wordList.collectAsState(listOf())
     NavigationHost(navController) {
         composable(Screen.HomeScreen.name) {
-            CreateMainScreen(navigationController = navController)
+            CreateMainScreen(navigationController = navController, viewModel = viewModel, words = wordList.value)
         }
 
         composable(Screen.AuthorizationScreen.name) {
@@ -118,7 +107,7 @@ fun CustomNavigationHost(
         }
 
         composable(Screen.HistoryScreen.name) {
-            History(queries = queries, navigationController = navController)
+            History(navigationController = navController, viewModel = viewModel, queries = queries.value)
         }
 
     }.build()

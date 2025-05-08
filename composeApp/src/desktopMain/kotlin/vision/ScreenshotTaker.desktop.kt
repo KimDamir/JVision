@@ -1,16 +1,22 @@
 package vision
 
+import androidx.compose.foundation.border
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
 import api.sendScreenshot
+import const.viewmodel.JVisionViewModel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import lc.kra.system.keyboard.GlobalKeyboardHook
 import lc.kra.system.keyboard.event.GlobalKeyAdapter
 import lc.kra.system.keyboard.event.GlobalKeyEvent
-import org.example.project.changeWordList
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import ui.components.Button
+import ui.theme.JvisionTheme
 import vision.HookListenerService.Companion.endService
 import vision.HookListenerService.Companion.startService
 import java.awt.MouseInfo
@@ -20,41 +26,33 @@ import java.awt.Robot
 import java.awt.image.BufferedImage
 import java.awt.image.DataBufferInt
 
-const val IMAGE_WIDTH = 128
+const val IMAGE_WIDTH = 64
 const val IMAGE_HEIGHT = 32
 
 @OptIn(ExperimentalResourceApi::class)
-actual fun takeScreenshot() {
+actual fun takeScreenshot(vm:JVisionViewModel) {
     val robot = Robot()
     val cursorPosition = MouseInfo.getPointerInfo().location
     val rectangle = Rectangle(cursorPosition.x - IMAGE_WIDTH/2, cursorPosition.y - IMAGE_HEIGHT/2,
         IMAGE_WIDTH, IMAGE_HEIGHT)
     val image = robot.createScreenCapture(rectangle)
     println("Changing word list")
-    runBlocking{
-        launch {
-            changeWordList(sendScreenshot(image))
-        }
-    }
+    vm.changeWordList(sendScreenshot(image))
 }
-fun takeCustomScreenshot(firstPosition: Point) {
+fun takeCustomScreenshot(firstPosition: Point, vm:JVisionViewModel) {
     val robot = Robot()
     val lastPosition = MouseInfo.getPointerInfo().location
     val width = lastPosition.x - firstPosition.x
     val height = lastPosition.y - firstPosition.y
-//    if (width < IMAGE_WIDTH && height < IMAGE_HEIGHT) {
-//        takeScreenshot()
-//        return
-//    }
+    if (width < 3 || height < 3) {
+        takeScreenshot(vm)
+        return
+    }
     val rectangle = Rectangle(firstPosition.x, firstPosition.y,
         width, height)
     val image = robot.createScreenCapture(rectangle)
     println("Changing word list")
-    runBlocking{
-        launch {
-            changeWordList(sendScreenshot(image))
-        }
-    }
+    vm.changeWordList(sendScreenshot(image))
 }
 @Composable
 actual fun listenForCall(action: ()->Unit) {
@@ -129,16 +127,15 @@ fun get2DPixelArrayFast(image: BufferedImage): Array<IntArray> {
 
 
 @Composable
-actual fun autoButton(modifier: Modifier) {
+actual fun autoButton(modifier: Modifier, vm: JVisionViewModel) {
     var open by remember { mutableStateOf(false) }
 
-    Button("Auto", onClick = {
+    Button(if (open) "End" else "Auto", onClick = {
         if (open) {
             endService()
         } else {
-            startService()
+            startService(vm)
         }
         open = !open
-    },
-        modifier = modifier)
+    }, modifier = modifier)
 }

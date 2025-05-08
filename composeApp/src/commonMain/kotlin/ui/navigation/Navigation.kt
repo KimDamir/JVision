@@ -4,11 +4,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import kotlinx.coroutines.CoroutineScope
 
 class NavigationController(
     private val startDestination: String,
-    private var backStackScreens: MutableSet<String> = mutableSetOf()
+    private var backStackScreens: MutableSet<String> = mutableSetOf(),
 ) {
+    lateinit var coroutineScope: CoroutineScope
     // Variable to store the state of the current screen
     var currentScreen: MutableState<String> = mutableStateOf(startDestination)
 

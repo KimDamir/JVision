@@ -11,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import const.viewmodel.JVisionViewModel
 import dataclasses.Query
 import jvision.composeapp.generated.resources.Res
 import jvision.composeapp.generated.resources.arrow
@@ -22,9 +23,8 @@ import ui.navigation.NavigationController
 
 @Composable
 @Preview
-fun History(modifier: Modifier = Modifier, queries:MutableSharedFlow<List<Query>>, navigationController: NavigationController) {
-    val queriesState = queries.collectAsState(listOf())
-    Column(modifier=modifier.fillMaxSize())
+fun History(modifier: Modifier = Modifier, navigationController: NavigationController, viewModel: JVisionViewModel, queries: List<Query>) {
+    Column(modifier=modifier.fillMaxSize().background(color = MaterialTheme.colorScheme.background))
     {
         Row (modifier=Modifier.fillMaxWidth()){
             Image(imageResource(Res.drawable.arrow), "Arrow Icon",
@@ -32,7 +32,7 @@ fun History(modifier: Modifier = Modifier, queries:MutableSharedFlow<List<Query>
                     .clickable { navigationController.navigate(Screen.HomeScreen.name) })
             Spacer(Modifier.weight(1f))
             Text("Show queries from: ")
-            HistoryDropdownMenu()
+            HistoryDropdownMenu(viewModel)
             Spacer(Modifier.width(15.dp))
         }
 
@@ -48,7 +48,6 @@ fun History(modifier: Modifier = Modifier, queries:MutableSharedFlow<List<Query>
             }
         }
         customWordColumn(navigationController, Modifier
-            .weight(4F),
-            queriesState)
+            .weight(4F), viewModel, queries)
     }
 }

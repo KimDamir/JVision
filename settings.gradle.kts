@@ -10,6 +10,7 @@ pluginManagement {
                 includeGroupAndSubgroups("com.google")
                 includeGroupAndSubgroups("lc.kra.system")
                 includeGroupAndSubgroups("com.google.code.gson")
+                includeGroupAndSubgroups("org.jetbrains")
             }
         }
         mavenCentral()
@@ -28,6 +29,7 @@ dependencyResolutionManagement {
                 includeGroupAndSubgroups("com.google")
                 includeGroupAndSubgroups("lc.kra.system")
                 includeGroupAndSubgroups("com.google.code.gson")
+                includeGroupAndSubgroups("org.jetbrains")
             }
         }
     }

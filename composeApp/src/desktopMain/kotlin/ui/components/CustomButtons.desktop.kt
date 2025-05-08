@@ -1,6 +1,8 @@
 package ui.components
 
-import androidx.compose.foundation.*
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -15,17 +17,15 @@ import api.getHistory
 import api.login
 import api.register
 import api.sendQuery
-import com.dokar.sonner.*
+import com.dokar.sonner.ToastType
+import com.dokar.sonner.Toaster
+import com.dokar.sonner.ToasterDefaults
+import com.dokar.sonner.rememberToasterState
+import const.viewmodel.JVisionViewModel
 import dataclasses.Query
 import dataclasses.User
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import org.example.project.Screen
-import org.example.project.changeWordList
-import org.example.project.setHistory
 import ui.navigation.NavigationController
-
-
 
 
 @Composable
@@ -94,31 +94,33 @@ actual fun registerButton(
 @Composable
 actual fun historyButton(
     navigationController: NavigationController,
-    modifier: Modifier
+    modifier: Modifier,
+    vm: JVisionViewModel
 ) {
-    val scope = rememberCoroutineScope()
     Button("History", onClick = {
-        scope.launch { setHistory(getHistory()) }
         navigationController.navigate(Screen.HistoryScreen.name)
+        vm.setHistory(getHistory())
+
     }, modifier = modifier)
 }
 
 @Composable
-actual fun customWordColumn(navigationController: NavigationController, modifier: Modifier, queries: State<List<Query>>) {
+actual fun customWordColumn(navigationController: NavigationController, modifier: Modifier, vm:JVisionViewModel, queries: List<Query>) {
+    println(queries)
+    if (queries.isEmpty()) {
+        Text("No queries found.", Modifier.fillMaxWidth(), textAlign = TextAlign.Center, color = MaterialTheme.colorScheme.onSurface)
+    }
     LazyColumn (modifier) {
         var color = Color.White
-        val queryValues = queries.value
         var isChosen = false
-        if (queryValues.isNotEmpty()) {
-            items (queryValues) { query: Query ->
+        if (queries.isNotEmpty()) {
+            items(queries) { query: Query ->
                 Row(Modifier.fillMaxWidth().height(35.dp).background(color).clickable {
                     if (!isChosen) {
                         isChosen = true
                         color = Color(0x6F7EC9)
-                        runBlocking {
-                            changeWordList(sendQuery(query.query_text))
-                        }
                         navigationController.navigate(Screen.HomeScreen.name)
+                        vm.changeWordList(sendQuery(query.query_text))
                     }
                 }, horizontalArrangement = Arrangement.SpaceEvenly) {
 
@@ -165,11 +167,10 @@ actual fun customWordColumn(navigationController: NavigationController, modifier
 }
 
 @Composable
-actual fun HistoryDropdownMenu() {
+actual fun HistoryDropdownMenu(vm: JVisionViewModel) {
     var expanded by remember { mutableStateOf(false) }
     var chosen by remember { mutableStateOf(Options.HOUR) }
     val options = Options.entries.toTypedArray()
-    val scope = rememberCoroutineScope()
     Box ()
     {
         Text(chosen.text, modifier = Modifier.clickable {
@@ -184,9 +185,7 @@ actual fun HistoryDropdownMenu() {
                     text = {Text(option.text)},
                     onClick = {
                         chosen = option
-                        scope.launch {
-                            setHistory(getHistory(option.text))
-                        }
+                        vm.setHistory(getHistory(option.text))
                         expanded = false
                     })
             }

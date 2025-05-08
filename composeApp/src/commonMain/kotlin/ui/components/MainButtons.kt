@@ -7,20 +7,23 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import const.viewmodel.JVisionViewModel
+import kotlinx.coroutines.CoroutineScope
 import org.example.project.Screen
 import ui.navigation.NavigationController
 import vision.autoButton
 
 @Composable
-fun MainButtons(modifier: Modifier = Modifier, navigationController: NavigationController) {
+fun MainButtons(modifier: Modifier = Modifier, navigationController: NavigationController, vm:JVisionViewModel) {
     Surface(modifier=modifier.fillMaxWidth(), color = MaterialTheme.colorScheme.tertiaryContainer) {
         Row(modifier = modifier, horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically) {
             Button("Logout", onClick = {
                 navigationController.navigate(Screen.AuthorizationScreen.name)
             }, modifier = Modifier.size(150.dp, 40.dp).padding(2.dp).weight(1F))
             historyButton(navigationController,
-                Modifier.size(150.dp, 40.dp).padding(2.dp).weight(1F))
-            autoButton( modifier = Modifier.size(150.dp, 40.dp).padding(2.dp).weight(1F))
+                Modifier.size(150.dp, 40.dp).padding(2.dp).weight(1F),
+                vm)
+            autoButton( modifier = Modifier.size(150.dp, 40.dp).padding(2.dp).weight(1F), vm)
         }
     }
 

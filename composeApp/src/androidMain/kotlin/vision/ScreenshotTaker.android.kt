@@ -13,19 +13,22 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import const.viewmodel.JVisionViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.example.project.MainActivity
 import store.UserStore
 import ui.components.Button
+import util.drawOverOtherAppsEnabled
+import util.startPermissionActivity
 
 
 const val IMAGE_WIDTH = 256
 const val IMAGE_HEIGHT = 80
 
 @RequiresApi(Build.VERSION_CODES.O)
-actual fun takeScreenshot() {
+actual fun takeScreenshot(vm: JVisionViewModel) {
 }
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -37,26 +40,31 @@ actual fun listenForCall(action: () -> Unit) {
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-actual fun autoButton(modifier: Modifier) {
+actual fun autoButton(modifier: Modifier, vm: JVisionViewModel) {
     val context = LocalContext.current
     val activity = context.getActivityOrNull() as MainActivity
     val open = remember { mutableStateOf(false) }
     Button("Auto", onClick = {
         if (open.value) {
             context.stopService(Intent(context, ScreenshotService::class.java))
+            open.value = !open.value
             println("Service stopped")
         } else {
-            print("${activity.resultCode} ${activity.data}")
-            val intent = Intent(context, ScreenshotService::class.java)
-            intent.putExtra("RESULT_CODE", activity.resultCode)
-            intent.putExtra("DATA", activity.data)
-            CoroutineScope(Dispatchers.IO).launch {
-                UserStore(context).getAccessToken.collect{value -> intent.putExtra("TOKEN", value)}
+            if (!context.drawOverOtherAppsEnabled()) {
+                context.startPermissionActivity()
+            } else {
+                val intent = Intent(context, ScreenshotService::class.java)
+                intent.putExtra("RESULT_CODE", activity.resultCode)
+                intent.putExtra("DATA", activity.data)
+                CoroutineScope(Dispatchers.IO).launch {
+                    UserStore(context).getAccessToken.collect{value -> intent.putExtra("TOKEN", value)}
+                }
+                context.startForegroundService(intent)
+                open.value = !open.value
+                println("Service started")
             }
-            context.startForegroundService(intent)
-            println("Service started")
         }
-        open.value = !open.value
+
     },
         modifier = modifier)
 }

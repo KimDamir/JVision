@@ -2,11 +2,14 @@ import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
+
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
+    kotlin("plugin.serialization") version "2.1.0"
+    id("org.jetbrains.kotlin.plugin.parcelize") version "2.1.0"
 }
 
 
@@ -47,6 +50,8 @@ kotlin {
             implementation(compose.components.uiToolingPreview)
             implementation(compose.material3)
             implementation(libs.kotlinx.coroutines.core)
+            implementation(libs.androidx.lifecycle.viewmodel.compose)
+            implementation(libs.kotlinx.serialization.json.v181)
         }
         desktopMain.dependencies {
             implementation(libs.sonner.v038)
@@ -54,7 +59,7 @@ kotlin {
             implementation(libs.system.hook)
             implementation(libs.okhttp)
             implementation(libs.com.google.code.gson.gson2)
-            implementation(libs.androidx.lifecycle.livedata.core.ktx)
+            implementation(libs.kotlinx.coroutines.swing)
         }
     }
 }
@@ -88,6 +93,9 @@ android {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
+    lint {
+        disable.add("NullSafeMutableLiveData")
+    }
 }
 
 dependencies {
@@ -100,7 +108,7 @@ dependencies {
     implementation(libs.androidx.databinding.compiler)
     implementation(libs.androidx.datastore.core.android)
     implementation(libs.androidx.datastore.preferences.core.jvm)
-    implementation(libs.androidx.lifecycle.livedata.core.ktx)
+    implementation(libs.androidx.lifecycle.viewmodel.android)
     debugImplementation(compose.uiTooling)
 }
 

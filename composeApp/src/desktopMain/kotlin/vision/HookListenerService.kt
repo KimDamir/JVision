@@ -1,6 +1,7 @@
 package vision
 
 
+import const.viewmodel.JVisionViewModel
 import lc.kra.system.keyboard.GlobalKeyboardHook
 import lc.kra.system.keyboard.event.GlobalKeyAdapter
 import lc.kra.system.keyboard.event.GlobalKeyEvent
@@ -13,8 +14,10 @@ class HookListenerService private constructor(){
         private var hook = GlobalKeyboardHook(true)
         private var pressed = false
         private lateinit var firstPosition: Point
+        private lateinit var vm: JVisionViewModel
 
-        fun startService() {
+        fun startService(vm:JVisionViewModel = JVisionViewModel()) {
+            this.vm = vm
             println("Turning on service")
             hook = GlobalKeyboardHook(true)
             hook.addKeyListener(keyListener)
@@ -36,7 +39,7 @@ class HookListenerService private constructor(){
 
             override fun keyReleased(event: GlobalKeyEvent) {
                 if (event.virtualKeyCode == GlobalKeyEvent.VK_SHIFT) {
-                    takeCustomScreenshot(firstPosition)
+                    takeCustomScreenshot(firstPosition, vm)
                     pressed = false
                 }
             }
