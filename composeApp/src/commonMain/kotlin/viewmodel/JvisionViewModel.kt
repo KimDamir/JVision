@@ -5,9 +5,7 @@ import androidx.lifecycle.viewModelScope
 import dataclasses.Query
 import dataclasses.Word
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 
 class JVisionViewModel: ViewModel() {

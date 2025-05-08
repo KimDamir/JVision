@@ -74,7 +74,6 @@ class ScreenshotService : LifecycleService(), SavedStateRegistryOwner {
     private lateinit var handler: Handler
     private lateinit var screenshotView: View
     private lateinit var wordList: List<Word>
-    private lateinit var vm: JVisionViewModel
     private var isLoaded: Boolean = false
     private var errorCount = 0
     private lateinit var bounds: Rect

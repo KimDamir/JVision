@@ -6,10 +6,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import const.viewmodel.JVisionViewModel
-import dataclasses.Query
 import dataclasses.Word
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.collect
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import ui.components.*
 import ui.navigation.NavigationController

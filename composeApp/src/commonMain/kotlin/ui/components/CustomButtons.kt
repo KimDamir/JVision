@@ -2,12 +2,10 @@ package ui.components
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.State
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.TextFieldValue
 import const.viewmodel.JVisionViewModel
 import dataclasses.Query
-import kotlinx.coroutines.CoroutineScope
 import ui.navigation.NavigationController
 
 enum class Options(val text: String) {

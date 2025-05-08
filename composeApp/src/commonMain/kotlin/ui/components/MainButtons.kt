@@ -8,7 +8,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import const.viewmodel.JVisionViewModel
-import kotlinx.coroutines.CoroutineScope
 import org.example.project.Screen
 import ui.navigation.NavigationController
 import vision.autoButton

@@ -1,22 +1,14 @@
 package vision
 
-import androidx.compose.foundation.border
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.dp
 import api.sendScreenshot
 import const.viewmodel.JVisionViewModel
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import lc.kra.system.keyboard.GlobalKeyboardHook
 import lc.kra.system.keyboard.event.GlobalKeyAdapter
 import lc.kra.system.keyboard.event.GlobalKeyEvent
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import ui.components.Button
-import ui.theme.JvisionTheme
 import vision.HookListenerService.Companion.endService
 import vision.HookListenerService.Companion.startService
 import java.awt.MouseInfo

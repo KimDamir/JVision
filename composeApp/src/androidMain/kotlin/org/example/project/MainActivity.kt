@@ -18,9 +18,7 @@ import androidx.core.content.ContextCompat
 import api.checkToken
 import const.viewmodel.JVisionViewModel
 import dataclasses.ParcelableWord
-import dataclasses.Word
 import dataclasses.fromParcelable
-import java.io.Serializable
 
 
 class MainActivity : AppCompatActivity() {

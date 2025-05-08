@@ -166,7 +166,6 @@ actual fun HistoryDropdownMenu(vm: JVisionViewModel) {
     var chosen by remember { mutableStateOf(Options.HOUR) }
     val context = LocalContext.current
     val options = Options.entries.toTypedArray()
-    val scope = rememberCoroutineScope()
     Box ()
     {
         Text(chosen.text, modifier = Modifier.clickable {
